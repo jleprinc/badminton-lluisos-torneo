@@ -32,6 +32,14 @@ const translations = {
     roundsLabel: 'Rondes',
     generateBtn: 'Genera el calendari',
 
+    saveLoadHeading: 'Desa o carrega el torneig',
+    saveLoadHint: 'Descarrega el torneig com a fitxer per obrir-lo en un altre navegador o dispositiu.',
+    saveJsonBtn: 'Descarrega torneig',
+    loadJsonBtn: 'Carrega torneig',
+    confirmLoad: 'Això substituirà totes les dades actuals (jugadors, calendari i resultats). Vols continuar?',
+    loadError: 'El fitxer no és vàlid. Assegura\'t que és un fitxer descarregat des d\'aquesta aplicació.',
+    loadSuccess: 'Torneig carregat correctament!',
+
     resetHeading: 'Reinicia les dades',
     resetHint: 'Elimina permanentment els jugadors, el calendari i els resultats desats en aquest navegador.',
     resetBtn: 'Reinicia-ho tot',
@@ -120,6 +128,14 @@ const translations = {
     courtsLabel: 'Pistas',
     roundsLabel: 'Rondas',
     generateBtn: 'Generar el calendario',
+
+    saveLoadHeading: 'Guardar o cargar el torneo',
+    saveLoadHint: 'Descarga el torneo como archivo para abrirlo en otro navegador o dispositivo.',
+    saveJsonBtn: 'Descargar torneo',
+    loadJsonBtn: 'Cargar torneo',
+    confirmLoad: 'Esto sustituirá todos los datos actuales (jugadores, calendario y resultados). ¿Quieres continuar?',
+    loadError: 'El archivo no es válido. Asegúrate de que es un archivo descargado desde esta aplicación.',
+    loadSuccess: '¡Torneo cargado correctamente!',
 
     resetHeading: 'Reiniciar los datos',
     resetHint: 'Elimina permanentemente los jugadores, el calendario y los resultados guardados en este navegador.',
@@ -223,6 +239,11 @@ function applyStaticTranslations() {
   document.getElementById('courtsLabelText').textContent = t('courtsLabel');
   document.getElementById('roundsLabelText').textContent = t('roundsLabel');
   document.getElementById('generateBtn').textContent = t('generateBtn');
+
+  document.getElementById('saveLoadHeading').textContent = t('saveLoadHeading');
+  document.getElementById('saveLoadHint').textContent = t('saveLoadHint');
+  document.getElementById('saveJsonBtn').textContent = '💾 ' + t('saveJsonBtn');
+  document.getElementById('loadJsonBtn').textContent = '📂 ' + t('loadJsonBtn');
 
   document.getElementById('resetHeading').textContent = t('resetHeading');
   document.getElementById('resetHint').textContent = t('resetHint');

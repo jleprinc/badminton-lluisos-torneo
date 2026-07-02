@@ -296,6 +296,43 @@ document.getElementById('editTitleBtn').addEventListener('click', () => {
   }
 });
 
+// ---------- Save / Load JSON ----------
+document.getElementById('saveJsonBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safeName = (state.tournamentName || 'tournament').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+  a.href = url;
+  a.download = `${safeName}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('loadJsonBtn').addEventListener('click', () => {
+  document.getElementById('loadJsonInput').click();
+});
+
+document.getElementById('loadJsonInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!confirm(t('confirmLoad'))) { e.target.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data.players || !Array.isArray(data.players)) throw new Error();
+      state = { ...defaultState(), ...data };
+      saveState();
+      render();
+      alert(t('loadSuccess'));
+    } catch (err) {
+      alert(t('loadError'));
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
 // ---------- Reset ----------
 document.getElementById('resetBtn').addEventListener('click', () => {
   if (!confirm(t('confirmReset'))) return;

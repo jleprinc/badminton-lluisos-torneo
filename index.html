@@ -63,6 +63,16 @@
       </form>
     </div>
 
+    <div class="card">
+      <h2 id="saveLoadHeading"></h2>
+      <p class="hint" id="saveLoadHint"></p>
+      <div class="inline-form">
+        <button id="saveJsonBtn" class="secondary"></button>
+        <button id="loadJsonBtn" class="secondary"></button>
+        <input type="file" id="loadJsonInput" accept=".json" hidden>
+      </div>
+    </div>
+
     <div class="card danger-card">
       <h2 id="resetHeading"></h2>
       <p class="hint" id="resetHint"></p>
@@ -88,6 +98,8 @@
   </section>
 
 </main>
+
+<footer class="version-footer">v1.1.0</footer>
 
 <script src="i18n.js"></script>
 <script src="app.js"></script>
