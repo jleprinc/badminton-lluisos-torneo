@@ -58,6 +58,37 @@ function buildLevelBalancedTeams(playing) {
   return teams;
 }
 
+function buildSameLevelTeams(playing) {
+  const teams = [];
+  const numTeams = playing.length / 2;
+  const byLevel = {
+    1: shuffle(playing.filter(p => p.level === 1)),
+    2: shuffle(playing.filter(p => p.level === 2)),
+    3: shuffle(playing.filter(p => p.level === 3))
+  };
+  const used = new Set();
+
+  for (const level of [1, 2, 3]) {
+    const group = byLevel[level];
+    for (let i = 0; i + 1 < group.length && teams.length < numTeams; i += 2) {
+      teams.push([group[i].id, group[i + 1].id]);
+      used.add(group[i].id);
+      used.add(group[i + 1].id);
+    }
+  }
+
+  // Leftover players (one per level at most) — pair by closest level
+  const remaining = shuffle(playing.filter(p => !used.has(p.id)))
+    .sort((a, b) => a.level - b.level);
+  let ri = 0;
+  while (ri + 1 < remaining.length && teams.length < numTeams) {
+    teams.push([remaining[ri].id, remaining[ri + 1].id]);
+    ri += 2;
+  }
+
+  return teams;
+}
+
 function generateSchedule(players, numCourts, numRounds) {
   const restCounts = {};
   players.forEach(p => { restCounts[p.id] = 0; });
@@ -80,10 +111,13 @@ function generateSchedule(players, numCourts, numRounds) {
 
     const playing = players.filter(p => !resting.includes(p.id));
 
+    const sameLevelRound = r === 2;
+    const buildTeams = sameLevelRound ? buildSameLevelTeams : buildLevelBalancedTeams;
+
     let bestTeams = null;
-    let bestPartnerRepeats = Infinity;
+    let bestPartnerRepeats = 5;
     for (let attempt = 0; attempt < MAX_ATTEMPTS && bestPartnerRepeats > 0; attempt++) {
-      const candidate = buildLevelBalancedTeams(playing);
+      const candidate = buildTeams(playing);
       const repeats = candidate.reduce(
         (acc, team) => acc + (partnerHistory.has(pairKey(team[0], team[1])) ? 1 : 0),
         0
@@ -96,16 +130,33 @@ function generateSchedule(players, numCourts, numRounds) {
     const teams = bestTeams;
     teams.forEach(team => partnerHistory.add(pairKey(team[0], team[1])));
 
+    const getTeamLevel = (team) => {
+      return team.map(id => players.find(p => p.id === id).level).reduce((a, b) => a + b);
+    };
+
     let bestOrder = null;
     let bestOpponentPairs = null;
-    let bestOpponentRepeats = Infinity;
-    for (let attempt = 0; attempt < MAX_ATTEMPTS && bestOpponentRepeats > 0; attempt++) {
-      const candidateOrder = shuffle(teams);
+    let bestScore = 5;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS && bestScore > 0; attempt++) {
+      let candidateOrder;
+
+      if (sameLevelRound && attempt < MAX_ATTEMPTS / 2) {
+        const sorted = shuffle(teams).sort((a, b) => getTeamLevel(a) - getTeamLevel(b));
+        candidateOrder = [];
+        for (let i = 0; i + 1 < sorted.length; i += 2) {
+          candidateOrder.push(sorted[i], sorted[i + 1]);
+        }
+      } else {
+        candidateOrder = shuffle(teams);
+      }
+
       const pairsThisArrangement = [];
       let repeats = 0;
+      let levelGap = 0;
       for (let g = 0; g < numGames; g++) {
         const t1 = candidateOrder[g * 2];
         const t2 = candidateOrder[g * 2 + 1];
+        if (sameLevelRound) levelGap += Math.abs(getTeamLevel(t1) - getTeamLevel(t2));
         for (const p1 of t1) {
           for (const p2 of t2) {
             const key = pairKey(p1, p2);
@@ -114,13 +165,43 @@ function generateSchedule(players, numCourts, numRounds) {
           }
         }
       }
-      if (repeats < bestOpponentRepeats) {
-        bestOpponentRepeats = repeats;
+      const score = repeats * 10 + levelGap;
+      if (score < bestScore) {
+        bestScore = score;
         bestOrder = candidateOrder;
         bestOpponentPairs = pairsThisArrangement;
       }
     }
     bestOpponentPairs.forEach(key => opponentHistory.add(key));
+
+    // Rebalance matches where the level gap is too big (>2) by swapping players
+    if (sameLevelRound) {
+      for (let g = 0; g < numGames; g++) {
+        const t1 = bestOrder[g * 2];
+        const t2 = bestOrder[g * 2 + 1];
+        const gap = Math.abs(getTeamLevel(t1) - getTeamLevel(t2));
+        if (gap > 2) {
+          // Try all swaps between the two teams, pick the one with smallest gap
+          let bestGap = gap;
+          let bestSwap = null;
+          for (let a = 0; a < 2; a++) {
+            for (let b = 0; b < 2; b++) {
+              const newT1 = [t1[1 - a], t2[b]];
+              const newT2 = [t1[a], t2[1 - b]];
+              const newGap = Math.abs(getTeamLevel(newT1) - getTeamLevel(newT2));
+              if (newGap < bestGap) {
+                bestGap = newGap;
+                bestSwap = [newT1, newT2];
+              }
+            }
+          }
+          if (bestSwap) {
+            bestOrder[g * 2] = bestSwap[0];
+            bestOrder[g * 2 + 1] = bestSwap[1];
+          }
+        }
+      }
+    }
 
     const games = [];
     for (let g = 0; g < numGames; g++) {
