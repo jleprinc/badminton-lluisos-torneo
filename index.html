@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Badminton Tournament</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<header>
+  <h1>🏸 <span id="tournamentTitle">Club Badminton Tournament</span></h1>
+  <button id="editTitleBtn" class="link-btn">rename</button>
+  <button id="exportBtn" class="secondary export-btn">⬇ Export to Excel</button>
+</header>
+
+<div class="privacy-note">
+  🔒 Everything you enter here (players, scores) is saved only in this browser, on this device. Nothing is sent anywhere. Use "Export to Excel" to share results.
+</div>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="players">Players</button>
+  <button class="tab-btn" data-tab="schedule">Schedule</button>
+  <button class="tab-btn" data-tab="rankings">Rankings</button>
+</nav>
+
+<main>
+
+  <!-- PLAYERS TAB -->
+  <section id="players" class="tab-panel active">
+    <div class="card">
+      <h2>Add a player</h2>
+      <form id="addPlayerForm" class="inline-form">
+        <input type="text" id="playerName" placeholder="Full name" required>
+        <select id="playerLevel" required>
+          <option value="1">Level 1 (strongest)</option>
+          <option value="2" selected>Level 2</option>
+          <option value="3">Level 3</option>
+        </select>
+        <button type="submit">Add player</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Players (<span id="playerCount">0</span>)</h2>
+      <table id="playersTable">
+        <thead><tr><th>Name</th><th>Level</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Generate schedule</h2>
+      <p class="hint">Players are automatically split into level-balanced doubles teams (strongest paired with weakest) for each round, and the same two people are never made partners twice. Generating again will replace the current schedule and any scores entered.</p>
+      <form id="generateForm" class="inline-form">
+        <label>Courts <input type="number" id="numCourts" min="1" value="2" required></label>
+        <label>Rounds <input type="number" id="numRounds" min="1" value="3" required></label>
+        <button type="submit">Generate schedule</button>
+      </form>
+    </div>
+
+    <div class="card danger-card">
+      <h2>Reset data</h2>
+      <p class="hint">Permanently clears players, schedule and scores stored in this browser.</p>
+      <button id="resetBtn" class="danger">Reset everything</button>
+    </div>
+  </section>
+
+  <!-- SCHEDULE TAB -->
+  <section id="schedule" class="tab-panel">
+    <div id="scheduleContent"></div>
+  </section>
+
+  <!-- RANKINGS TAB -->
+  <section id="rankings" class="tab-panel">
+    <div class="card">
+      <table id="rankingsTable">
+        <thead>
+          <tr><th>#</th><th>Name</th><th>Games</th><th>Sets diff</th><th>Points diff</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
