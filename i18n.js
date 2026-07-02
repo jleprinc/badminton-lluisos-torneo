@@ -51,6 +51,8 @@ const translations = {
     setLabel: 'Set',
     saveScoreBtn: 'Desa el resultat',
     savedLabel: 'Desat ✓',
+    compensationRound: 'Ronda de compensació',
+    compensationHint: 'Partits extra perquè tothom jugui el mateix nombre de rondes. Els jugadors amb * no compten per a la classificació.',
     removedPlayer: '(jugador eliminat)',
 
     rankName: 'Nom',
@@ -148,6 +150,8 @@ const translations = {
     setLabel: 'Set',
     saveScoreBtn: 'Guardar resultado',
     savedLabel: 'Guardado ✓',
+    compensationRound: 'Ronda de compensación',
+    compensationHint: 'Partidos extra para que todos jueguen el mismo número de rondas. Los jugadores con * no cuentan para la clasificación.',
     removedPlayer: '(jugador eliminado)',
 
     rankName: 'Nombre',

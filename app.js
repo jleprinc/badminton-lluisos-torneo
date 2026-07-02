@@ -218,6 +218,72 @@ function generateSchedule(players, numCourts, numRounds) {
     rounds.push({ roundNumber: r, resting, games });
   }
 
+  // Compensation round: players who rested play extra matches
+  const gamesPlayed = {};
+  players.forEach(p => { gamesPlayed[p.id] = 0; });
+  rounds.forEach(round => {
+    round.games.forEach(game => {
+      [...game.team1, ...game.team2].forEach(id => { gamesPlayed[id]++; });
+    });
+  });
+
+  const needGames = players.filter(p => gamesPlayed[p.id] < numRounds);
+  if (needGames.length >= 2) {
+    const fillerPool = players.filter(p => gamesPlayed[p.id] >= numRounds);
+    const compGames = [];
+    const used = new Set();
+
+    // Collect groups of 4 players for each compensation match
+    const matchGroups = [];
+    for (let i = 0; i < needGames.length; i++) {
+      if (used.has(needGames[i].id)) continue;
+      const group = [needGames[i]];
+      used.add(needGames[i].id);
+
+      const remaining = needGames.filter(p => !used.has(p.id));
+      const fillers = shuffle(fillerPool.filter(p => !used.has(p.id)));
+      const candidates = [...remaining, ...fillers];
+
+      for (let c = 0; c < candidates.length && group.length < 4; c++) {
+        group.push(candidates[c]);
+        used.add(candidates[c].id);
+      }
+
+      if (group.length === 4) matchGroups.push(group);
+    }
+
+    // Build balanced teams and balanced opponents for each group
+    matchGroups.forEach(group => {
+      const countsForRanking = group.filter(p => gamesPlayed[p.id] < numRounds).map(p => p.id);
+
+      // Build balanced teams (low+high)
+      const teams = buildLevelBalancedTeams(group);
+      // teams has 2 teams, pair them as opponents
+      // Try both pairings, pick the one with smallest level gap
+      const getTeamLevel = (team) => team.map(id => players.find(p => p.id === id).level).reduce((a, b) => a + b);
+      const gap = Math.abs(getTeamLevel(teams[0]) - getTeamLevel(teams[1]));
+
+      compGames.push({
+        id: uid(),
+        court: (compGames.length % numCourts) + 1,
+        order: Math.floor(compGames.length / numCourts) + 1,
+        team1: teams[0],
+        team2: teams[1],
+        sets: [],
+        countsForRanking
+      });
+    });
+
+    if (compGames.length > 0) {
+      rounds.push({
+        roundNumber: numRounds + 1,
+        resting: [],
+        games: compGames,
+        isCompensation: true
+      });
+    }
+  }
+
   return rounds;
 }
 
@@ -250,6 +316,7 @@ function computeRankings() {
         const pointsAgainst = isTeam1 ? team2Points : team1Points;
         team.forEach(pid => {
           if (!stats[pid]) return;
+          if (game.countsForRanking && !game.countsForRanking.includes(pid)) return;
           stats[pid].gamesPlayed++;
           stats[pid].setsWon += setsWon;
           stats[pid].setsLost += setsLost;
@@ -433,8 +500,12 @@ function renderSchedule() {
     block.className = 'round-block';
 
     const restingNames = round.resting.map(playerName).join(', ');
+    const roundTitle = round.isCompensation
+      ? `${escapeHtml(t('compensationRound'))}`
+      : `${escapeHtml(t('round'))} ${round.roundNumber}`;
     block.innerHTML = `
-      <h3>${escapeHtml(t('round'))} ${round.roundNumber}</h3>
+      <h3>${roundTitle}</h3>
+      ${round.isCompensation ? `<div class="resting-note">${escapeHtml(t('compensationHint'))}</div>` : ''}
       ${round.resting.length ? `<div class="resting-note">${escapeHtml(t('restingLabel'))}: ${escapeHtml(restingNames)}</div>` : ''}
       <div class="courts-grid"></div>
     `;
@@ -463,8 +534,14 @@ function renderGameCard(roundNumber, game) {
   const card = document.createElement('div');
   card.className = 'game-card';
 
-  const team1 = `${playerName(game.team1[0])} & ${playerName(game.team1[1])}`;
-  const team2 = `${playerName(game.team2[0])} & ${playerName(game.team2[1])}`;
+  const counts = game.countsForRanking || null;
+  const pName = (id) => {
+    const name = playerName(id);
+    if (counts && !counts.includes(id)) return `${name} *`;
+    return name;
+  };
+  const team1 = `${pName(game.team1[0])} & ${pName(game.team1[1])}`;
+  const team2 = `${pName(game.team2[0])} & ${pName(game.team2[1])}`;
 
   const existingSets = [0, 1, 2].map(i => game.sets[i] || { team1: '', team2: '' });
 
