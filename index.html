@@ -1,27 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ca">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Badminton Tournament</title>
+<title>Torneig de Bàdminton</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <header>
-  <h1>🏸 <span id="tournamentTitle">Club Badminton Tournament</span></h1>
-  <button id="editTitleBtn" class="link-btn">rename</button>
-  <button id="exportBtn" class="secondary export-btn">⬇ Export to Excel</button>
+  <h1>🏸 <span id="tournamentTitle">Torneig de Bàdminton del Club</span></h1>
+  <button id="editTitleBtn" class="link-btn"></button>
+  <div class="header-actions">
+    <div class="lang-toggle">
+      <button class="lang-btn" data-lang="ca">CA</button>
+      <button class="lang-btn" data-lang="es">ES</button>
+    </div>
+    <button id="exportBtn" class="secondary export-btn"></button>
+  </div>
 </header>
 
-<div class="privacy-note">
-  🔒 Everything you enter here (players, scores) is saved only in this browser, on this device. Nothing is sent anywhere. Use "Export to Excel" to share results.
-</div>
+<div class="privacy-note" id="privacyNote"></div>
 
 <nav class="tabs">
-  <button class="tab-btn active" data-tab="players">Players</button>
-  <button class="tab-btn" data-tab="schedule">Schedule</button>
-  <button class="tab-btn" data-tab="rankings">Rankings</button>
+  <button class="tab-btn active" data-tab="players" id="tabPlayersBtn"></button>
+  <button class="tab-btn" data-tab="schedule" id="tabScheduleBtn"></button>
+  <button class="tab-btn" data-tab="rankings" id="tabRankingsBtn"></button>
 </nav>
 
 <main>
@@ -29,40 +33,40 @@
   <!-- PLAYERS TAB -->
   <section id="players" class="tab-panel active">
     <div class="card">
-      <h2>Add a player</h2>
+      <h2 id="addPlayerHeading"></h2>
       <form id="addPlayerForm" class="inline-form">
-        <input type="text" id="playerName" placeholder="Full name" required>
+        <input type="text" id="playerName" required>
         <select id="playerLevel" required>
-          <option value="1">Level 1 (strongest)</option>
-          <option value="2" selected>Level 2</option>
-          <option value="3">Level 3</option>
+          <option value="1" id="addLevelOpt1"></option>
+          <option value="2" id="addLevelOpt2" selected></option>
+          <option value="3" id="addLevelOpt3"></option>
         </select>
-        <button type="submit">Add player</button>
+        <button type="submit" id="addPlayerBtn"></button>
       </form>
     </div>
 
     <div class="card">
-      <h2>Players (<span id="playerCount">0</span>)</h2>
+      <h2><span id="playersHeadingText"></span> (<span id="playerCount">0</span>)</h2>
       <table id="playersTable">
-        <thead><tr><th>Name</th><th>Level</th><th></th></tr></thead>
+        <thead><tr><th id="thName"></th><th id="thLevel"></th><th></th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
 
     <div class="card">
-      <h2>Generate schedule</h2>
-      <p class="hint">Players are automatically split into level-balanced doubles teams (strongest paired with weakest) for each round, and the same two people are never made partners twice. Generating again will replace the current schedule and any scores entered.</p>
+      <h2 id="generateHeading"></h2>
+      <p class="hint" id="generateHint"></p>
       <form id="generateForm" class="inline-form">
-        <label>Courts <input type="number" id="numCourts" min="1" value="2" required></label>
-        <label>Rounds <input type="number" id="numRounds" min="1" value="3" required></label>
-        <button type="submit">Generate schedule</button>
+        <label><span id="courtsLabelText"></span> <input type="number" id="numCourts" min="1" value="2" required></label>
+        <label><span id="roundsLabelText"></span> <input type="number" id="numRounds" min="1" value="3" required></label>
+        <button type="submit" id="generateBtn"></button>
       </form>
     </div>
 
     <div class="card danger-card">
-      <h2>Reset data</h2>
-      <p class="hint">Permanently clears players, schedule and scores stored in this browser.</p>
-      <button id="resetBtn" class="danger">Reset everything</button>
+      <h2 id="resetHeading"></h2>
+      <p class="hint" id="resetHint"></p>
+      <button id="resetBtn" class="danger"></button>
     </div>
   </section>
 
@@ -76,7 +80,7 @@
     <div class="card">
       <table id="rankingsTable">
         <thead>
-          <tr><th>#</th><th>Name</th><th>Games</th><th>Sets diff</th><th>Points diff</th></tr>
+          <tr><th>#</th><th id="rankName"></th><th id="rankGames"></th><th id="rankSetsDiff"></th><th id="rankPointsDiff"></th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -85,6 +89,7 @@
 
 </main>
 
+<script src="i18n.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@ const STORAGE_KEY = 'badmintonTournamentState';
 
 function defaultState() {
   return {
-    tournamentName: 'Club Badminton Tournament',
+    tournamentName: t('defaultTournamentName'),
     players: [],
     settings: { numCourts: 2, numRounds: 3 },
     rounds: []
@@ -94,7 +94,7 @@ function generateSchedule(players, numCourts, numRounds) {
       }
     }
     const teams = bestTeams;
-    teams.forEach(t => partnerHistory.add(pairKey(t[0], t[1])));
+    teams.forEach(team => partnerHistory.add(pairKey(team[0], team[1])));
 
     let bestOrder = null;
     let bestOpponentPairs = null;
@@ -207,7 +207,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 // ---------- Title ----------
 document.getElementById('editTitleBtn').addEventListener('click', () => {
-  const name = prompt('Tournament name', state.tournamentName);
+  const name = prompt(t('promptTournamentName'), state.tournamentName);
   if (name && name.trim()) {
     state.tournamentName = name.trim();
     saveState();
@@ -217,7 +217,7 @@ document.getElementById('editTitleBtn').addEventListener('click', () => {
 
 // ---------- Reset ----------
 document.getElementById('resetBtn').addEventListener('click', () => {
-  if (!confirm('This permanently deletes all players, the schedule and scores from this browser. Continue?')) return;
+  if (!confirm(t('confirmReset'))) return;
   state = defaultState();
   saveState();
   render();
@@ -249,12 +249,12 @@ function renderPlayers() {
       <td>${escapeHtml(p.name)}</td>
       <td>
         <select data-id="${p.id}" class="level-select">
-          <option value="1" ${p.level === 1 ? 'selected' : ''}>1 (strongest)</option>
-          <option value="2" ${p.level === 2 ? 'selected' : ''}>2</option>
-          <option value="3" ${p.level === 3 ? 'selected' : ''}>3</option>
+          <option value="1" ${p.level === 1 ? 'selected' : ''}>${escapeHtml(t('rowLevel1'))}</option>
+          <option value="2" ${p.level === 2 ? 'selected' : ''}>${escapeHtml(t('rowLevel2'))}</option>
+          <option value="3" ${p.level === 3 ? 'selected' : ''}>${escapeHtml(t('rowLevel3'))}</option>
         </select>
       </td>
-      <td><button class="danger" data-id="${p.id}" data-action="delete">Remove</button></td>
+      <td><button class="danger" data-id="${p.id}" data-action="delete">${escapeHtml(t('removeBtn'))}</button></td>
     `;
     tbody.appendChild(tr);
   });
@@ -270,7 +270,7 @@ function renderPlayers() {
 
   tbody.querySelectorAll('[data-action="delete"]').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (!confirm('Remove this player? If a schedule was already generated, regenerate it afterwards.')) return;
+      if (!confirm(t('confirmRemovePlayer'))) return;
       state.players = state.players.filter(p => p.id !== btn.dataset.id);
       saveState();
       render();
@@ -284,10 +284,10 @@ document.getElementById('generateForm').addEventListener('submit', e => {
   const numCourts = Math.max(1, Number(document.getElementById('numCourts').value) || 2);
   const numRounds = Math.max(1, Number(document.getElementById('numRounds').value) || 3);
   if (state.players.length < 4) {
-    alert('Add at least 4 players before generating a schedule');
+    alert(t('needFourPlayers'));
     return;
   }
-  if (state.rounds.length > 0 && !confirm('This replaces the current schedule and any scores entered. Continue?')) return;
+  if (state.rounds.length > 0 && !confirm(t('confirmRegenerate'))) return;
   state.settings = { numCourts, numRounds };
   state.rounds = generateSchedule(state.players, numCourts, numRounds);
   saveState();
@@ -298,7 +298,7 @@ document.getElementById('generateForm').addEventListener('submit', e => {
 // ---------- Schedule ----------
 function playerName(id) {
   const p = state.players.find(p => p.id === id);
-  return p ? p.name : '(removed player)';
+  return p ? p.name : t('removedPlayer');
 }
 
 function renderSchedule() {
@@ -306,7 +306,7 @@ function renderSchedule() {
   container.innerHTML = '';
 
   if (!state.rounds || state.rounds.length === 0) {
-    container.innerHTML = '<div class="empty-state">No schedule yet. Add players and generate one from the Players tab.</div>';
+    container.innerHTML = `<div class="empty-state">${escapeHtml(t('noScheduleYet'))}</div>`;
     return;
   }
 
@@ -316,8 +316,8 @@ function renderSchedule() {
 
     const restingNames = round.resting.map(playerName).join(', ');
     block.innerHTML = `
-      <h3>Round ${round.roundNumber}</h3>
-      ${round.resting.length ? `<div class="resting-note">Resting this round: ${escapeHtml(restingNames)}</div>` : ''}
+      <h3>${escapeHtml(t('round'))} ${round.roundNumber}</h3>
+      ${round.resting.length ? `<div class="resting-note">${escapeHtml(t('restingLabel'))}: ${escapeHtml(restingNames)}</div>` : ''}
       <div class="courts-grid"></div>
     `;
 
@@ -327,7 +327,7 @@ function renderSchedule() {
     courts.forEach(court => {
       const col = document.createElement('div');
       col.className = 'court-column';
-      col.innerHTML = `<h4>Court ${court}</h4>`;
+      col.innerHTML = `<h4>${escapeHtml(t('court'))} ${court}</h4>`;
 
       const games = round.games.filter(g => g.court === court).sort((a, b) => a.order - b.order);
       games.forEach(game => {
@@ -354,13 +354,13 @@ function renderGameCard(roundNumber, game) {
     <div class="game-teams"><strong>${escapeHtml(team1)}</strong><span class="vs">vs</span><strong>${escapeHtml(team2)}</strong></div>
     ${existingSets.map((s, i) => `
       <div class="sets-row">
-        <span>Set ${i + 1}</span>
+        <span>${escapeHtml(t('setLabel'))} ${i + 1}</span>
         <input type="number" min="0" class="set-input" data-set="${i}" data-side="team1" value="${s.team1}">
         <span>-</span>
         <input type="number" min="0" class="set-input" data-set="${i}" data-side="team2" value="${s.team2}">
       </div>
     `).join('')}
-    <button class="secondary save-btn">Save score</button>
+    <button class="secondary save-btn">${escapeHtml(t('saveScoreBtn'))}</button>
     <span class="save-status"></span>
   `;
 
@@ -379,7 +379,7 @@ function renderGameCard(roundNumber, game) {
     saveState();
 
     const status = card.querySelector('.save-status');
-    status.textContent = 'Saved ✓';
+    status.textContent = t('savedLabel');
     setTimeout(() => { status.textContent = ''; }, 2000);
     renderRankings();
   });
@@ -393,7 +393,7 @@ function renderRankings() {
   const tbody = document.querySelector('#rankingsTable tbody');
   tbody.innerHTML = '';
   if (rankings.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No players yet</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-state">${escapeHtml(t('noPlayersYet'))}</td></tr>`;
     return;
   }
   rankings.forEach((r, i) => {
@@ -412,22 +412,23 @@ function renderRankings() {
 // ---------- Excel export (built entirely in the browser) ----------
 document.getElementById('exportBtn').addEventListener('click', () => {
   const wb = XLSX.utils.book_new();
+  const tPrefix = t('xlsTournamentPrefix');
 
   // Players sheet
   const playersRows = [
-    [`Tournament: ${state.tournamentName}`],
+    [`${tPrefix} ${state.tournamentName}`],
     [],
-    ['Name', 'Level'],
+    [t('xlsColName'), t('xlsColLevel')],
     ...state.players.slice().sort((a, b) => a.name.localeCompare(b.name)).map(p => [p.name, p.level])
   ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(playersRows), 'Players');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(playersRows), t('xlsPlayersSheet'));
 
   // Schedule sheet
   const scheduleRows = [
-    [`Tournament: ${state.tournamentName}`],
+    [`${tPrefix} ${state.tournamentName}`],
     [],
-    ['Round', 'Court', 'Order', 'Team 1 - Player A', 'Team 1 - Player B', 'Team 2 - Player A', 'Team 2 - Player B',
-      'Set 1 (T1-T2)', 'Set 2 (T1-T2)', 'Set 3 (T1-T2)', 'Sets Won T1', 'Sets Won T2', 'Points T1', 'Points T2']
+    [t('xlsColRound'), t('xlsColCourt'), t('xlsColOrder'), t('xlsColTeam1A'), t('xlsColTeam1B'), t('xlsColTeam2A'), t('xlsColTeam2B'),
+      t('xlsColSet1'), t('xlsColSet2'), t('xlsColSet3'), t('xlsColSetsWonT1'), t('xlsColSetsWonT2'), t('xlsColPointsT1'), t('xlsColPointsT2')]
   ];
   state.rounds.forEach(round => {
     const games = round.games.slice().sort((a, b) => a.court - b.court || a.order - b.order);
@@ -452,28 +453,28 @@ document.getElementById('exportBtn').addEventListener('click', () => {
       ]);
     });
   });
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(scheduleRows), 'Schedule');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(scheduleRows), t('xlsScheduleSheet'));
 
   // Resting per round sheet
-  const restingRows = [['Round', 'Resting player']];
+  const restingRows = [[t('xlsColRound'), t('xlsColRestingPlayer')]];
   state.rounds.forEach(round => {
     if (round.resting.length === 0) {
-      restingRows.push([round.roundNumber, '(everyone plays)']);
+      restingRows.push([round.roundNumber, t('xlsEveryonePlays')]);
     } else {
       round.resting.forEach(id => restingRows.push([round.roundNumber, playerName(id)]));
     }
   });
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(restingRows), 'Resting per round');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(restingRows), t('xlsRestingSheet'));
 
   // Rankings sheet
   const rankings = computeRankings();
   const rankingsRows = [
-    [`Tournament: ${state.tournamentName}`],
+    [`${tPrefix} ${state.tournamentName}`],
     [],
-    ['Rank', 'Name', 'Games Played', 'Sets Won', 'Sets Lost', 'Sets Diff', 'Points For', 'Points Against', 'Points Diff'],
+    [t('xlsColRank'), t('xlsColName'), t('xlsColGamesPlayed'), t('xlsColSetsWon'), t('xlsColSetsLost'), t('xlsColSetsDiff'), t('xlsColPointsFor'), t('xlsColPointsAgainst'), t('xlsColPointsDiff')],
     ...rankings.map((r, i) => [i + 1, r.name, r.gamesPlayed, r.setsWon, r.setsLost, r.setsDiff, r.pointsFor, r.pointsAgainst, r.pointsDiff])
   ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rankingsRows), 'Rankings');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rankingsRows), t('xlsRankingsSheet'));
 
   const safeName = (state.tournamentName || 'tournament').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
   const dateStr = new Date().toISOString().slice(0, 10);
